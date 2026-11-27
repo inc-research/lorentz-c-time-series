@@ -3,7 +3,7 @@
   "upload_type": "publication",
   "publication_type": "preprint",
   "creators": [
-    {"name": "AUTHOR-FAMILY-NAME, AUTHOR-GIVEN-NAMES", "orcid": "0000-0000-0000-0000"}
+    {"name": "Carleton, Ian", "orcid": "0009-0000-5071-0367"}
   ],
   "description": "A Lean-verified kinematics of the Lorentz c for time series in three state variables. For an observer who counts time in its own measurements and takes its unit from its own window, every covering window has exactly one Lorentz c, with sqrt(3) <= c <= sqrt(N), independent of the units of the axes. Between observers, cross-speeds in a frozen unit decide when two observers share one cone, and Ignatowsky's theorem in 1+1 shows that a family of frame changes has exactly one invariant-speed parameter. The release contains the paper (LaTeX source and PDF, CC-BY-4.0) and the Lean 4 / Mathlib formalization (Apache-2.0) with its axiom audits.",
   "license": "cc-by-4.0",

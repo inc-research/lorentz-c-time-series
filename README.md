@@ -1,6 +1,6 @@
 # Counting time in one's own measurements: the Lorentz *c* of a time series, verified in Lean
 
-**AUTHOR NAME** · ORCID [0000-0000-0000-0000](https://orcid.org/0000-0000-0000-0000)
+**Ian Carleton** · ORCID [0009-0000-5071-0367](https://orcid.org/0009-0000-5071-0367)
 
 This repository holds a Lean-verified **kinematics of the Lorentz *c* for time series** in three state variables, together with the paper that states it in ordinary mathematical notation.
 

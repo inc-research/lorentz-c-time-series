@@ -3,9 +3,9 @@ message: "If you use this work, please cite it as below."
 title: "Counting time in one's own measurements: the Lorentz c of a time series, verified in Lean"
 type: software
 authors:
-  - family-names: "AUTHOR-FAMILY-NAME"
-    given-names: "AUTHOR-GIVEN-NAMES"
-    orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: "Carleton"
+    given-names: "Ian"
+    orcid: "https://orcid.org/0009-0000-5071-0367"
 version: "1.0"
 date-released: "2026-11-27"
 license: Apache-2.0
