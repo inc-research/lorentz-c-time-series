@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "Counting time in one's own measurements: the Lorentz c of a time series, verified in Lean"
+type: software
+authors:
+  - family-names: "AUTHOR-FAMILY-NAME"
+    given-names: "AUTHOR-GIVEN-NAMES"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+version: "1.0"
+date-released: "2026-11-27"
+license: Apache-2.0
+repository-code: "https://github.com/inc-research/lorentz-c-time-series"
+abstract: >-
+  A Lean-verified kinematics of the Lorentz c for time series in three state
+  variables. For an observer who counts time in its own measurements and takes
+  its unit from its own window, every covering window has exactly one Lorentz c,
+  with sqrt(3) <= c <= sqrt(N), independent of the units of the axes. Between
+  observers, cross-speeds in a frozen unit decide when two observers share one
+  cone, and Ignatowsky's theorem in 1+1 shows that a family of frame changes has
+  exactly one invariant-speed parameter.
+keywords:
+  - Lean 4
+  - Mathlib
+  - formal verification
+  - Lorentz transformation
+  - time series
+  - invariant speed
+  - Ignatowsky theorem

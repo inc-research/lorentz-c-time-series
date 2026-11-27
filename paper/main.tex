@@ -1,0 +1,321 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,tabularx,array,xltabular}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=green!45!black,urlcolor=magenta!70!black]{hyperref}
+
+% Lean declaration names, printed verbatim and breakable after _ . '
+\usepackage{url}
+\DeclareUrlCommand\lean{\urlstyle{tt}}
+\makeatletter\g@addto@macro\UrlBreaks{\do\_\do.\do'}\makeatother
+\newcommand{\leanref}[1]{\par\smallskip\noindent{\small\raggedright\textcolor{black!65}{Lean:} #1\par}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\mahal}{\operatorname{mahal}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\draftnote}[1]{\par\noindent\fcolorbox{orange}{orange!8}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{\small\textbf{DRAFT for joint review.} #1}}\par}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{Theorem}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+
+\title{Counting time in one's own measurements:\\ the Lorentz $c$ of a time series, verified in Lean}
+\author{AUTHOR NAME\\ \small ORCID \href{https://orcid.org/0000-0000-0000-0000}{0000-0000-0000-0000}}
+\date{Version 1.0, 27 November 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We give a Lean-verified kinematics of the Lorentz $c$ for time series in three state variables. The observer counts time in its own measurements and takes its unit of length from its own window: the inverse of the second moment of the window's steps. For this observer, every window whose steps span $\R^3$ has exactly one Lorentz $c$, its largest step in that unit. Every pair of samples in the window is then causally separated, one step is lightlike, $\sqrt3 \le c \le \sqrt N$ for $N$ steps, $c$ does not depend on the units of the axes, and after rescaling to $c=1$ the textbook group $O(1,3)$ keeps the window's critical speed at $1$. Between observers, the cross-speed of one observer's steps in another's frozen unit is unique and unit-free; it decides when two observers share one cone, and the ways they can fail to are listed completely. Ignatowsky's theorem in $1+1$ shows that a family of frame changes obeying reciprocity, parity, group closure and time order has exactly one invariant-speed parameter. The results are kinematic: no law of motion is claimed. All statements are checked by Lean~4 and Mathlib, with axiom audits that show only the standard axioms.
+\end{abstract}
+
+\tableofcontents
+
+%======================================================================
+\section{Introduction}\label{sec:intro}
+
+The Lorentz transformation was built around one constant, the speed of light. This paper asks a narrower question: can the structure of the Lorentz transformation be read off a time series, with a constant $c$ that belongs to the data set rather than to light? ``Generalized'' here means \emph{applicable outside its original setting}. It does not refer to general relativity, and nothing in this paper is about light or about physical spacetime.
+
+The answer depends on how the observer constructs time and units. We fix one construction and state it every time:
+\begin{itemize}
+\item \textbf{Tick rule.} The time of sample $k$ is $k$: the observer counts its own measurements.
+\item \textbf{State rule.} A sample is a point $x_k \in \R^3$, three measured variables.
+\item \textbf{Unit rule.} Lengths are measured in the window's own unit of change, the metric $M^{-1}$, where $M$ is the second moment of the window's steps.
+\end{itemize}
+With this construction, the result is plain. \emph{An observer who counts time in its own measurements, and takes its unit from its own window, finds exactly one Lorentz $c$.} Part~I (Section~\ref{sec:one}) proves this and its consequences. Part~II (Section~\ref{sec:between}) compares observers: when one observer's steps are read in another's frozen unit, and when a family of frame changes has a single invariant speed.
+
+\paragraph{Class of the result.} The results form a kinematics: they say when a record can be validly described in Lorentz form, and how observers' descriptions compare. In the language of the classical debate on covariance, this is \emph{kinematic covariance}. Whether a system's law of motion is unchanged under these transformations (\emph{dynamical invariance}) is a separate question, and it is not addressed here (Section~\ref{sec:scope}). The distinction matters. Every record that meets the coverage condition has a Lorentz description, so the description alone says nothing about a particular system \cite{norton1993,duff2002}. Content appears in relations between observers that can fail, which is the subject of Part~II.
+
+\paragraph{Formal verification.} Every theorem is stated and proved in Lean~4 \cite{lean4} with Mathlib \cite{mathlib2020}. Each statement below carries the name of its Lean declaration. The Lean checker certifies the theorems; this paper states what they say. Section~\ref{sec:verify} explains how to rerun the check.
+
+%======================================================================
+\section{Setting and conventions}\label{sec:setting}
+
+\paragraph{Record and window.} A record is a map $x : \Z \to \R^3$ (Lean: \lean{State := EuclideanSpace} $\R$ \lean{(Fin 3)}). A window $[a,b)$ with $a<b$ has $N=b-a$ steps $u_k = x_{k+1}-x_k$ for $a \le k < b$ (\lean{windowSteps}), and samples $x_a,\dots,x_b$.
+
+\paragraph{Second moment and coverage.} The window's second moment is the uncentred matrix
+\[ M = \frac1N \sum_{k=a}^{b-1} u_k u_k^{\top} \qquad \text{(\lean{secondMoment})}. \]
+The steps \emph{cover} if they span $\R^3$ (\lean{Covers}); this holds exactly when $M$ is invertible, equivalently positive definite (N1c$'$).
+
+\paragraph{Unit of change.} With $G = M^{-1}$, a vector $v$ has squared length $\mahal_M(v) = v^{\top} M^{-1} v$, the Mahalanobis form \cite{mahalanobis1936} (\lean{mahal}). Step $k$ has squared own-unit length $\mahal_M(u_k)$ (\lean{stepMahal}).
+
+\paragraph{Minkowski form.} For $c\in\R$ and a positive semidefinite $G$,
+\[ Q_{c,G}(\Delta\tau,\Delta x) = c^2 \Delta\tau^2 - \Delta x^{\top} G\, \Delta x. \]
+A chord is \emph{causal} if $Q\ge0$, \emph{timelike} if $Q>0$ and \emph{lightlike} if $Q=0$. With $G=I$ we write $Q_c$.
+
+\paragraph{Critical speed.} For a finite table of (time, state) pairs and a set $S$ of index pairs, $c^*_S$ is the largest chord slope $\|\Delta x\|/|\Delta t|$ over $S$ (\lean{critSpeedOn}), and $c^*$ is that over all pairs (\lean{critSpeed}). For a window and any $L$ with $L^{\top}L = M^{-1}$, $c^\circ$ is the critical speed of the tick-time table $(k, Lx_k)$ (\lean{tickCritSpeed}).
+
+\paragraph{Lean conventions a reader should know.} (i) Mathlib defines the inverse of a singular matrix as $0$, so statements with no hypothesis on $M$ remain meaningful; the headline assumes coverage, so $M$ is genuinely invertible there. (ii) Critical speeds live in $\R_{\ge0}$ as maxima over finite sets, and the maximum over an empty set is $0$, which is why windows need $a<b$. (iii) $\mahal$ is a \emph{squared} length; statements take square roots where a length is meant. (iv) Every theorem in the library is followed by a concrete example that instantiates its hypotheses, so a statement with unsatisfiable hypotheses would show.
+
+%======================================================================
+\section{Part I. One observer: the Lorentz \texorpdfstring{$c$}{c} of a window}\label{sec:one}
+
+\subsection{The definition}
+
+\begin{definition}[Lorentz $c$]\label{def:lorentzc}
+A real number $c$ is a \emph{Lorentz $c$} of the window $[a,b)$ of $x$ if
+(i) the steps cover;
+(ii) every step has own-unit length at most $c$: $\sqrt{\mahal_M(u_k)} \le c$ for $a\le k<b$; and
+(iii) some step has own-unit length exactly $c$.\leanref{\lean{IsLorentzC}}
+\end{definition}
+
+The definition contains no choice of factor $L$ and no supremum. Theorem~\ref{thm:K1} shows the choice of $L$ cannot matter.
+
+\subsection{The headline}
+
+\begin{theorem}[K1]\label{thm:K1}
+If $a<b$ and the steps of $[a,b)$ cover, the window has exactly one Lorentz $c$. For every $L$ with $L^{\top}L=M^{-1}$: $c$ is a Lorentz $c$ of $[a,b)$ if and only if the steps cover, $a<b$ and $c = c^\circ$.\leanref{\lean{existsUnique_isLorentzC}, \lean{isLorentzC_iff}}
+\end{theorem}
+
+\begin{theorem}[K2]
+If $c$ is the Lorentz $c$ of $[a,b)$, then every chord between two samples of the window (not only steps) is causal for $Q_{c,M^{-1}}$ in tick time, and some step is lightlike.\leanref{\lean{IsLorentzC.isCausalM_chord}, \lean{IsLorentzC.exists_lightlike_step}}
+\end{theorem}
+
+\begin{theorem}[K3]
+If $c$ is the Lorentz $c$ of a window with $N$ steps, then $\sqrt3 \le c \le \sqrt N$. Equivalently, the normalized $\tilde c = c/\sqrt3$ satisfies $1\le \tilde c \le \sqrt{N/3}$.\leanref{\lean{IsLorentzC.bounds}}
+\end{theorem}
+
+The lower bound comes from a trace identity: the mean squared own-unit step length is exactly $3$ (N1c), so some step has length at least $\sqrt3$. The upper bound is a leverage bound: no squared step length exceeds $N$ (N1d). The value $c=\sqrt3$ is attained exactly when every step has length $\sqrt3$ (N1e), the \emph{light-ray limit}.
+
+\begin{theorem}[K4]
+For any $3\times3$ matrix $D$ with invertible determinant, $c$ is a Lorentz $c$ of $[a,b)$ for the record $Dx$ if and only if it is one for $x$. In particular, recording the series in other units, including units that mix the axes, gives the same Lorentz $c$.\leanref{\lean{isLorentzC_map}}
+\end{theorem}
+
+\begin{theorem}[K5]
+If $c$ is the Lorentz $c$ of $[a,b)$ and $L^{\top}L=M^{-1}$, then the window's table of the record $Lx/c$ in tick time has critical speed $c^*=1$, and every $\Lambda\in O(1,3)$ keeps it at $1$.\leanref{\lean{IsLorentzC.natural}}
+\end{theorem}
+
+\subsection{Observers at several rates: a system Lorentz \texorpdfstring{$c$}{c}}
+
+\begin{definition}[System Lorentz $c$]
+Given a set $S\subseteq\Z$ of sampling rates and a window $\mathrm{win}(m)$ for each $m\in S$, the record $x$ has \emph{system Lorentz $c$} equal to $c$ if, for every $m\in S$, the observer that keeps every $m$-th sample, $k\mapsto x_{mk}$, has Lorentz $c$ equal to $c$ over its own window. Agreement is exact; the value is unique when $S\neq\emptyset$.\leanref{\lean{IsSystemLorentzC}, \lean{IsSystemLorentzC.unique}}
+\end{definition}
+
+\begin{theorem}[N1g, K6]
+Let $x_k = (r\cos\omega k,\ r\sin\omega k,\ vk)$ with $r,v\neq0$. For every rate $m$ with $\sin m\omega\neq0$ and every window of whole turns of $m\omega$, every step of the $m$-th-sample observer has own-unit length exactly $\sqrt3$. Hence the helix has system Lorentz $c=\sqrt3$ for every such set of rates.\leanref{\lean{helix_isSystemLorentzC}, \lean{helix_tickCritSpeed}}
+\end{theorem}
+
+\begin{theorem}[K7]
+A planar helix ($v=0$) or an aliased rate ($\sin m\omega=0$) has no Lorentz $c$ in any window, and a system that contains such an observer has no system Lorentz $c$.\leanref{\lean{helix_not_isLorentzC}, \lean{not_isSystemLorentzC_of_aliased}}
+\end{theorem}
+
+\subsection{Supporting results}
+
+The headline rests on the results in Table~\ref{tab:support}. Results marked \emph{context} are proved and part of the library, but the headline does not use them. They supply the vocabulary of cones, Lipschitz bounds, signatures and gauges for continuous worldlines.
+
+{\small
+\begin{xltabular}{\linewidth}{@{}l X >{\raggedright\arraybackslash}p{4.3cm}@{}}
+\caption{Results supporting Part I. The full list, with every Lean name, is in the axiom audit \texttt{lean/Axioms.lean}.}\label{tab:support}\\
+\toprule
+ID & Statement & Lean (representative) \\
+\midrule
+\endfirsthead
+\toprule
+ID & Statement & Lean (representative) \\
+\midrule
+\endhead
+T1a, T1b & For $c\ge0$: $Q_c>0 \iff \|\Delta x\|<c|\Delta t|$; $Q_c\ge0\iff\|\Delta x\|\le c|\Delta t|$. & \lean{isTimelike_iff}, \lean{isCausal_iff} \\
+T1, T2, T2c & context. $x$ is $c$-Lipschitz iff every chord is $c$-causal; Lipschitz constant $<c$ gives timelike chords. & \lean{lipschitzWith_iff_allChordsCausal} \\
+T3--T5 & context. Hyperbolic motion has all chords timelike but no bound below $c$; unbounded slopes admit no $c$; a finite table admits some $c$. & \lean{hyperbolic_gap}, \lean{not_allChordsCausal_of_unbounded} \\
+T6, T7 & context. Boosted time is strictly increasing and onto for $\|v\|L<c^2$; boosted uniform samples stay uniform iff there is no acceleration along $v$. & \lean{boostTime_strictMono_surjective}, \lean{boostedStamps_uniform_iff} \\
+T8 & context. For $c\neq0$, $Q_c$ has signature $(1,3)$ and trivial radical; $c=0$ degenerates. & \lean{sigPos_minkowskiQF}, \lean{radical_minkowskiQF} \\
+T9 & context. Diagonal gauges: $(c,\lambda^2G)$ and $(c/\lambda,G)$ give the same cone. & \lean{minkowskiQG_gauge} \\
+E1 & $c^*_S$ is the largest slope over $S$; all chords in $S$ are $c$-causal iff $c^*_S\le c$; the maximum is attained by a lightlike chord. & \lean{critSpeedOn}, \lean{allCausalOn_iff} \\
+T10 & With increasing times, causal steps imply causal chords; $c^*$ over all pairs equals $c^*$ over steps. & \lean{critSpeedOn_windowPairs} \\
+T13 & context. Perturbing states by $\le\delta$ moves $c^*_S$ by $\le 2\delta/h$ for gaps $\ge h$. & \lean{abs_critSpeedOn_sub_le} \\
+T14 & $\Lambda\in O(1,3;c^*)$ keeps times distinct and $c^*$ unchanged. & \lean{critSpeed_frame} \\
+T15 & Natural units: dividing by $c^*$ gives $c^*=1$; $O(1,3;c)$ is conjugate to $O(1,3)$. & \lean{critSpeedOn_normalize}, \lean{mem_formGroup_iff_normalized} \\
+N1a & Unit equivariance: $M(Du)=DMD^{\top}$, and each step keeps its own-unit length. & \lean{mahal_secondMoment_map} \\
+N1b & $Q_{c,L^{\top}L}(\Delta\tau,\Delta x) = Q_c(\Delta\tau,L\Delta x)$; tick-time slopes of $(k,Lx_k)$ are own-unit step lengths. & \lean{minkowskiQM_eq}, \lean{slope_tick_eq_mahal} \\
+N1c, N1c$'$ & Mean squared own-unit step length is $3$; $M$ is invertible iff the steps span $\R^3$. & \lean{mean_mahal_secondMoment}, \lean{covers_iff_span_eq_top} \\
+N1d, N1e & Leverage $\le N$; $\sqrt3\le c^\circ\le\sqrt N$, with equality at $\sqrt3$ iff all steps have length $\sqrt3$. & \lean{mahal_secondMoment_le_card}, \lean{sqrt_three_le_tickCritSpeed} \\
+N1f & context. Relative eigenvalues of two second moments are unit-free. & \lean{charpoly_relMat_conj} \\
+\bottomrule
+\end{xltabular}}
+
+%======================================================================
+\section{Part II. Between observers: cross-speed, shared cones, one invariant speed}\label{sec:between}
+
+Part~I is true of every covering record. To get statements that can fail, we compare two observers, $A$ and $B$, each with its own record and window. Each observer is a \emph{state-spacetime system}: a system together with an observer rule. $A$'s unit is computed once, from $A$'s window, and then frozen. Nothing is boosted in this part except in the Ignatowsky subsection.
+
+\subsection{Cross-speed}
+
+Write $\mahal_{A}(u^B_k)$ for the squared length of $B$'s step $k$ measured in $A$'s unit $M_A^{-1}$ (\lean{crossMahal}).
+
+\begin{definition}[Cross-speed]
+$s$ is the \emph{cross-speed of $B$ in $A$}, written $s_{B|A}$, if $A$'s window has Lorentz $c$ equal to $c_A$, every step of $B$'s window has $\sqrt{\mahal_A(u^B_k)}\le s\,c_A$, and some step reaches equality.
+A family of observers \emph{shares the cone} (\lean{SharesCone}) if every ordered pair has cross-speed $1$.\leanref{\lean{IsCrossSpeed}}
+\end{definition}
+
+So $s_{B|A}=1$ means $B$'s steps fill $A$'s cone exactly; $s>1$ means $B$ exceeds it; $s<1$ means $B$ saturates strictly inside it.
+
+\begin{theorem}[Y1--Y3]
+If $A$'s window has a Lorentz $c$ and $B$'s window is non-empty, the cross-speed $s_{B|A}$ exists and is unique. Every observer has cross-speed $1$ against itself. Applying one $D$ with invertible determinant to both records leaves every cross-speed, and the shared-cone property, unchanged.\leanref{\lean{exists_isCrossSpeed}, \lean{IsCrossSpeed.unique}, \lean{isCrossSpeed_self}, \lean{isCrossSpeed_map}, \lean{sharesCone_map}}
+\end{theorem}
+
+\begin{theorem}[Y8, no mutual containment]
+If $A$ and $B$ both have Lorentz $c=\sqrt3$ (all steps on their own cones) and both cross-speeds exist, then $s_{B|A}^2 + s_{A|B}^2 \ge 2$.\leanref{\lean{crossSpeed_sq_add_ge}}
+\end{theorem}
+
+The proof reads the mean of $B$'s steps in $A$'s unit as $\tr(M_A^{-1}M_B) \le 3 s_{B|A}^2$, and uses $\tr Y + \tr Y^{-1}\ge 6$ for the positive matrix $Y=M_A^{-1}M_B$, with equality only at $Y=I$. Two all-light observers cannot each lie strictly inside the other's cone. With the uniqueness of Y1, this makes the list of outcomes complete: \emph{U-pass} (both $1$), \emph{U-split} (one above $1$, one below) and \emph{U-cross} (both above $1$).
+
+\begin{theorem}[Y9]
+For a family of observers that each have Lorentz $c=\sqrt3$, the family shares the cone if and only if all window second moments are equal.\leanref{\lean{sharesCone_iff_secondMoment_eq}, \lean{sharesCone_pair_iff}}
+\end{theorem}
+
+\subsection{Witnesses: the helix pair and a trap}
+
+\begin{theorem}[Y4, Y5]
+A helix and its rotation by any angle about its axis share the cone over windows of whole turns. For two helices with equal $r,\omega$ and axial speeds $v,v'$, $s_{B|A}=\sqrt{(2+v'^2/v^2)/3}$ exactly; if $v^2<v'^2$ the pair is a U-split. A helix and its axis-permuted copy with $\rho^2\ne2v^2$, where $\rho^2 = r^2(2-2\cos\omega)$, give a U-cross.\leanref{\lean{helix_sharesCone_rot}, \lean{helix_isCrossSpeed_speed}, \lean{helix_crossSpeed_split}, \lean{helix_crossSpeed_cross}}
+\end{theorem}
+
+\begin{theorem}[Y6, trap]
+Per tick of $A$, any $m$-decimation of $A$'s own record inside $A$'s window has $s\le m$, so ``never exceeds the cone per tick'' holds for free on decimations. Per count, the helix's $m$-th-sample observer has $s^2\ge m^2/3$, so $s>1$ for $|m|\ge2$.\leanref{\lean{crossSpeed_decimate_le}, \lean{helix_decimate_crossSpeed}, \lean{helix_decimate_crossSpeed_gt}}
+\end{theorem}
+
+Y6 is why comparisons between observers must use independent records, not decimations of one stream: decimations share samples and pass or fail for reasons that do not concern the system.
+
+\subsection{One invariant speed: Ignatowsky in \texorpdfstring{$1+1$}{1+1}}
+
+We return to frame changes. A frame change in $1+1$ is a real $2\times2$ matrix acting on $(t,x)$.
+
+\begin{definition}[Ignatowsky family]
+A family $\Lambda(v)$, indexed by a velocity set $V\subseteq\R$, satisfies I0--I5 if:
+I0 $V$ contains some $v\neq0$;
+I1 each $\Lambda(v)$ is linear and sends the worldline $x=vt$ to the new origin;
+I2 $V=-V$ and $\Lambda(-v)\Lambda(v)=1$ (reciprocity);
+I3 $P\Lambda(v)P=\Lambda(-v)$ with $P=\mathrm{diag}(1,-1)$ (parity);
+I4 $\Lambda(u)\Lambda(v)=\Lambda(w)$ for some $w\in V$ (group closure);
+I5 $\Lambda(v)_{00}>0$ (time order).
+No continuity hypothesis is assumed.\leanref{\lean{IsIgnatowskyFamily}}
+\end{definition}
+
+For $K\ge0$ and $Kv^2<1$, let
+\[ T_{K,v} = \gamma \begin{pmatrix} 1 & -Kv \\ -v & 1 \end{pmatrix}, \qquad \gamma = \frac1{\sqrt{1-Kv^2}} \qquad \text{(\lean{ignatowskyT})}. \]
+$K=0$ is the Galilean family; $K=1/c^2$ is the Lorentz family with speed $c$.
+
+\begin{theorem}[Y7, Y7d, Y7e]
+(a) A family satisfying I0--I5 has exactly one $K\ge0$ with $Kv^2<1$ and $\Lambda(v)=T_{K,v}$ for every $v\in V$.
+(b) Conversely, $T_K$ on $\{v : Kv^2<1\}$ satisfies I0--I5, with $T_{K,u}T_{K,v} = T_{K,(u+v)/(1+Kuv)}$.
+(c) For the family's own $K$, the speeds $u$ kept by every $\Lambda(v)$ are exactly those with $Ku^2=1$: $\pm1/\sqrt K$ when $K>0$, and none when $K=0$.\leanref{\lean{IsIgnatowskyFamily.exists_K}, \lean{IsIgnatowskyFamily.existsUnique_K}, \lean{ignatowskyT_family}, \lean{ignatowskyT_mul}, \lean{IsIgnatowskyFamily.invariant_speed_iff'}}
+\end{theorem}
+
+So the principle of relativity, stated as I0--I5, leaves one free parameter, and that parameter fixes at most one invariant speed \cite{ignatowsky1910,levyleblond1976,mermin1984,pal2003}. This is the formal reason that observers who share a family of frame changes can share at most one cone.
+
+%======================================================================
+\section{Scope: what is complete, and what is not}\label{sec:scope}
+
+\paragraph{Complete.} Section~\ref{sec:one} gives the kinematics of one observer: existence, uniqueness, bounds, unit-freeness and natural units for the Lorentz $c$ of a window. Section~\ref{sec:between} gives the kinematics between observers: cross-speeds in a frozen unit, a complete outcome list, and the uniqueness of the invariant-speed parameter of a family of frame changes. Together these cover the kinematic half of the original programme, which separated kinematic covariance (can a Lorentz transformation be validly applied to the coordinates?) from dynamical invariance (are the laws unchanged?).
+
+\paragraph{Not complete, and not claimed.}
+\begin{itemize}
+\item \emph{Dynamical invariance.} No system's law of motion is shown to be invariant under $O(1,3;c)$. In every established case outside light, an invariant speed comes from a law, by symmetry principles \cite{levyleblond1976} or from the equations of a medium \cite{unruh1981}. Records alone cannot reach a law.
+\item \emph{A law from natural units.} A symmetry restricts admissible laws but does not select one \cite{wigner1939}, and natural units exist for every record. They can rule laws out (diffusive increments cannot be Lorentz-invariant \cite{dunkel2009}) but not rule one in.
+\item \emph{Light.} The $c$ here fills one of the roles of $c$ in physics, the slope of a cone \cite{ellis2005}, in the system's own units. It is not a signal speed.
+\item \emph{Ignatowsky in $1+3$}, and the formal link from Y7 to the cross-speed results.
+\item \emph{Relativity of the law across states of motion} (objects in different states of motion following one rest-frame law for one $K$).
+\item \emph{Other observer rules.} Observers with other starting samples, other clocks, or calendar-time translation are not covered; the system Lorentz $c$ uses offset $0$ and decimation only.
+\item \emph{Continuous worldlines} enter only through the context results T1--T7; the headline is for finite windows.
+\end{itemize}
+
+%======================================================================
+\section{Empirical companion}\label{sec:empirical}
+
+The theorems say what an observer of this kind finds in every record. Whether real observers of one system \emph{agree} is empirical. We report three pre-registered tests as illustrations, not as proofs. In each, the rule card (windows, statistic, tolerances) was frozen before any real data was computed.
+
+\begin{itemize}
+\item \textbf{Weather (one surface station).} No system $c$: the normalized $\tilde c$ keeps growing as data accumulate.
+\item \textbf{International Space Station (JPL Horizons ephemerides, 2022--2025).} A positive case at four sampling rates (4, 16, 64, 256 minutes): the unit of change is stable, $\tilde c$ levels off near $1.07$, and observers agree within $3\%$ over equal calendar span. This is the empirical counterpart of the light-ray limit of the helix (K6).
+\item \textbf{Fourteen Starlink satellites of one orbital shell (public element sets propagated by SGP4).} Each satellite was measured in its own frozen unit and compared with every other (91 pairs). All 91 pairs pass the shared-cone test (U-pass), with median scale disagreement $0.026\%$ against a tolerance of about $0.14\%$. The negative control, Starlink against Globalstar (about $6\%$ slower), gives a U-split in 24 of 24 pairs. This supports one cone within one shell under one model family. It is not a law (Section~\ref{sec:scope}).
+\end{itemize}
+The data pipelines and rule cards are not part of this release; the raw orbital element histories are subject to their provider's redistribution terms.
+
+%======================================================================
+\section{Implications, stated relative to the observer}\label{sec:implications}
+
+\draftnote{Wording to be settled together. Rules: every claim names its observer construction; three labelled tiers; 250--400 words; the quantum direction appears only in the third tier; end on an invitation, not a claim.}
+
+\paragraph{Proved.} For an observer that counts time in its own measurements and takes its unit from its own window, a Lorentz description is always available: one $c$ per covering window (K1), between $\sqrt3$ and $\sqrt N$ (K3), unchanged by any change of axis units (K4). Because this holds for every such record, noise included, it is a fact about the observer's construction, not about the system observed. Between two such observers, a frozen unit turns ``the same $c$'' into a statement that can fail, with exactly three ways to come out (Y1, Y8). And when observers' frame changes form a family that obeys the principle of relativity, that family has exactly one invariant-speed parameter (Y7e).
+
+\paragraph{Observed.} Under rule cards frozen in advance, and only within their stated limits: observers of the International Space Station at four sampling rates agree on $\tilde c$ within $3\%$; fourteen satellites of one Starlink shell share one cone to about $0.14\%$, while a different shell is separated in every pair; a weather record has no system $c$. These results are relative to the tick, state and unit rules of Section~\ref{sec:intro} and to the tolerances on each card.
+
+\paragraph{Direction (a question, not a claim).} The results suggest that the Lorentz structure of a record is, at least in part, a property of how the observer constructs time and units from it. Different constructions of time may therefore be worth comparing when the measured system is quantum, where the observer's construction is part of the experiment: for example, a qubit's state read by repeated tomography against the same state read by continuous weak measurement. Whether two such constructions of the same system share one cone is open.
+
+\paragraph{An invitation.} The definitions are short and the check is mechanical. We invite tests on other records and other observer constructions, and reports of where the construction fails.
+
+%======================================================================
+\section{Verification}\label{sec:verify}
+
+{\sloppy The formalization is in \lean{lean/}: the library \lean{GeneralizedC} (Part~I, 15 files) and the library \lean{GeneralizedCSymmetry} (Part~II, 3 files), which imports Part~I and does not modify it. The toolchain is Lean \lean{v4.35.0} with Mathlib \lean{v4.35.0}, pinned in \lean{lean-toolchain} and \lean{lake-manifest.json}.\par}
+\begin{verbatim}
+cd lean
+lake exe cache get                  # prebuilt Mathlib
+lake build                          # no errors, no "declaration uses 'sorry'"
+lake env lean Axioms.lean           # Part I: 103 #print axioms lines
+lake env lean AxiomsSymmetry.lean   # Part II: 31 #print axioms lines
+\end{verbatim}
+Every audit line must list only \lean{propext}, \lean{Classical.choice} and \lean{Quot.sound}, the standard axioms of Lean and Mathlib. Any \lean{sorryAx} would mean a gap. The audited names are the step results; the helper lemmas they rely on are covered transitively.
+
+%======================================================================
+\section{AI assistance and authorship}\label{sec:ai}
+
+The question, the observer construction, every decision on definitions, scope and wording, and the review of each result are the author's. The Lean proofs and the drafting of this text were carried out with the assistance of an AI model (Claude, Anthropic), under the author's direction, through a sequence of checkpoints, each reviewed and accepted by the author before the next began. The model is not an author. The correctness of the theorems does not rest on the author or the model: it rests on the Lean build and the axiom audits of Section~\ref{sec:verify}, which anyone can rerun.
+
+%======================================================================
+\appendix
+\section{Glossary and dependency map}\label{app:glossary}
+
+\begin{description}\small
+\item[Tick time] The time of sample $k$ is $k$, the observer's own count of measurements.
+\item[Window] $[a,b)$: the $N=b-a$ steps $u_k=x_{k+1}-x_k$, $a\le k<b$.
+\item[Second moment] $M=\frac1N\sum u_ku_k^{\top}$, uncentred.
+\item[Coverage] The steps span $\R^3$; equivalently $M$ is invertible.
+\item[Unit of change] The metric $M^{-1}$; a step's own-unit length is $\sqrt{u^{\top}M^{-1}u}$.
+\item[Causal, timelike, lightlike] $Q\ge0$, $Q>0$, $Q=0$ for the Minkowski form $Q_{c,G}$.
+\item[Critical speed $c^*$] The largest chord slope of a finite table.
+\item[Lorentz $c$] Definition~\ref{def:lorentzc}: the largest own-unit step of a covering window.
+\item[Light-ray limit] Every step has own-unit length $\sqrt3$, so $c=\sqrt3$, $\tilde c=1$.
+\item[Natural units] The state rescaled by $L/c$, so that $c^*=1$.
+\item[Cross-speed] $s_{B|A}$: $B$'s largest step in $A$'s frozen unit, relative to $c_A$.
+\item[Shares the cone] Every ordered pair of observers has cross-speed $1$.
+\item[U-pass, U-split, U-cross] Both cross-speeds $1$; one above and one below $1$; both above $1$.
+\item[Ignatowsky family] A family of $1+1$ frame changes obeying I0--I5; it is $T_K$ for one $K\ge0$.
+\item[Kinematic covariance] A Lorentz transformation can be validly applied to the coordinates.
+\item[Dynamical invariance] The law generating the record is unchanged by the transformation. Not addressed here.
+\item[Axiom audit] \lean{#print axioms} for each result, listing the axioms its proof depends on.
+\end{description}
+
+\paragraph{Dependency map (Part~I).} Finite tables (E1, T10, T14, T15) and the unit of change (N1a--N1d, N1c$'$) feed the window bridge (N1b-iv, N1e), which feeds the headline (\lean{IsLorentzC}, K1--K5, \lean{IsSystemLorentzC}); the witnesses (N1g, K6, K7) instantiate it. \textbf{Part~II.} Cross-speed (Y1--Y3, Y8, Y9) uses K1--K3 and N1a--N1c; the helix pair (Y4, Y5) and the trap (Y6) use N1g and K2; Ignatowsky (Y7--Y7e) is self-contained over $2\times2$ real matrices.
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
