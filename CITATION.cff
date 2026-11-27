@@ -6,7 +6,7 @@ authors:
   - family-names: "Carleton"
     given-names: "Ian"
     orcid: "https://orcid.org/0009-0000-5071-0367"
-version: "1.0"
+version: "1.0.1"
 doi: "10.5281/zenodo.24596935"
 identifiers:
   - type: doi

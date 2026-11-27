@@ -9,5 +9,5 @@
   "license": "cc-by-4.0",
   "keywords": ["Lean 4", "Mathlib", "formal verification", "Lorentz transformation", "time series", "invariant speed", "Ignatowsky theorem"],
   "notes": "AI assistance (Claude, Anthropic) in the Lean proofs and drafting is stated in the paper's Section 9 and the README; the model is not an author. The Lean build and axiom audits certify the theorems.",
-  "version": "1.0"
+  "version": "1.0.1"
 }

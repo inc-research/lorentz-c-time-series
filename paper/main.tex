@@ -28,7 +28,7 @@
 
 \title{Counting time in one's own measurements:\\ the Lorentz $c$ of a time series, verified in Lean}
 \author{Ian Carleton\\ \small ORCID \href{https://orcid.org/0009-0000-5071-0367}{0009-0000-5071-0367}}
-\date{Version 1.0, 27 November 2026}
+\date{Version 1.0.1, 27 November 2026}
 
 \begin{document}
 \maketitle
@@ -271,6 +271,8 @@ The data pipelines and rule cards are not part of this release; the raw orbital 
 
 %======================================================================
 \section{Verification}\label{sec:verify}
+
+{\sloppy\paragraph{Availability.} The Lean formalization, this paper's source and the axiom audits are archived on Zenodo at \href{https://doi.org/10.5281/zenodo.24596935}{doi:10.5281/zenodo.24596935} (version~1.0; all versions: \href{https://doi.org/10.5281/zenodo.24596934}{doi:10.5281/zenodo.24596934}), and maintained at \url{https://github.com/inc-research/lorentz-c-time-series}. The published \lean{lean/} folder has git tree hash \lean{92bd7069728214e9bd50f069cecceafa81624238}; \lean{git rev-parse HEAD:lean} reproduces it.\par}
 
 {\sloppy The formalization is in \lean{lean/}: the library \lean{GeneralizedC} (Part~I, 15 files) and the library \lean{GeneralizedCSymmetry} (Part~II, 3 files), which imports Part~I and does not modify it. The toolchain is Lean \lean{v4.35.0} with Mathlib \lean{v4.35.0}, pinned in \lean{lean-toolchain} and \lean{lake-manifest.json}.\par}
 \begin{verbatim}
