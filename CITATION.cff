@@ -7,7 +7,7 @@ authors:
     given-names: "Ian"
     orcid: "https://orcid.org/0009-0000-5071-0367"
 version: "1.0.1"
-doi: "10.5281/zenodo.24596935"
+doi: "10.5281/zenodo.24598165"
 identifiers:
   - type: doi
     value: "10.5281/zenodo.24596934"
@@ -15,6 +15,9 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.24596935"
     description: "Version 1.0"
+  - type: doi
+    value: "10.5281/zenodo.24598165"
+    description: "Version 1.0.1"
 date-released: "2026-11-27"
 license: Apache-2.0
 repository-code: "https://github.com/inc-research/lorentz-c-time-series"

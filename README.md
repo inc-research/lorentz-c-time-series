@@ -57,8 +57,9 @@ Every audit line must list only `propext`, `Classical.choice` and `Quot.sound`.
 
 ## How to cite
 
-Carleton, I. (2026). *Counting time in one's own measurements: the Lorentz c of a time series, verified in Lean* (Version 1.0). Zenodo. https://doi.org/10.5281/zenodo.24596935
+Carleton, I. (2026). *Counting time in one's own measurements: the Lorentz c of a time series, verified in Lean* (Version 1.0.1). Zenodo. https://doi.org/10.5281/zenodo.24598165
 
+- DOI for version 1.0.1 (adds the paper's availability paragraph; Lean unchanged): [10.5281/zenodo.24598165](https://doi.org/10.5281/zenodo.24598165)
 - DOI for version 1.0: [10.5281/zenodo.24596935](https://doi.org/10.5281/zenodo.24596935)
 - DOI for all versions (resolves to the latest): [10.5281/zenodo.24596934](https://doi.org/10.5281/zenodo.24596934)
 
