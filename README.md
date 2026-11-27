@@ -71,4 +71,4 @@ The question, the definitions' intent, every decision on scope and wording, and 
 ## Licence
 
 - The Lean code is licensed under Apache-2.0 (`LICENSE`).
-- The paper text and figures are licensed under CC-BY-4.0 (`LICENSE-paper`).
+- The paper text and figures are licensed under CC-BY-4.0 (`paper/LICENSE`).
