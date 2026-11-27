@@ -2,6 +2,8 @@
 
 **Ian Carleton** · ORCID [0009-0000-5071-0367](https://orcid.org/0009-0000-5071-0367)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24596934.svg)](https://doi.org/10.5281/zenodo.24596934)
+
 This repository holds a Lean-verified **kinematics of the Lorentz *c* for time series** in three state variables, together with the paper that states it in ordinary mathematical notation.
 
 ## What is proved
@@ -55,7 +57,12 @@ Every audit line must list only `propext`, `Classical.choice` and `Quot.sound`.
 
 ## How to cite
 
-See `CITATION.cff`; GitHub shows a "Cite this repository" button. The DOI will be added here once the Zenodo archive is minted.
+Carleton, I. (2026). *Counting time in one's own measurements: the Lorentz c of a time series, verified in Lean* (Version 1.0). Zenodo. https://doi.org/10.5281/zenodo.24596935
+
+- DOI for version 1.0: [10.5281/zenodo.24596935](https://doi.org/10.5281/zenodo.24596935)
+- DOI for all versions (resolves to the latest): [10.5281/zenodo.24596934](https://doi.org/10.5281/zenodo.24596934)
+
+See also `CITATION.cff`, which GitHub uses for its "Cite this repository" button.
 
 ## AI assistance
 
