@@ -49,7 +49,9 @@ lake env lean Axioms.lean       # Part I audit
 lake env lean AxiomsSymmetry.lean   # Part II audit
 ```
 
-Every audit line must list only `propext`, `Classical.choice` and `Quot.sound`. Any `sorryAx` would mean a gap. The Lean checker, not the author, certifies the theorems. The paper only states what they say.
+Every audit line must list only `propext`, `Classical.choice` and `Quot.sound`.
+
+**Release check (2026-11-27).** The `lean/` tree in this release (git tree `92bd7069728214e9bd50f069cecceafa81624238`) was built with `leanprover/lean4:v4.35.0`. `lake build` finished cleanly (2834 jobs; no errors, no `sorry`). The audits printed 103 (Part I) and 31 (Part II) results, every one depending only on `[propext, Classical.choice, Quot.sound]`; no `sorryAx` appears. Compare the tree hash with `git rev-parse HEAD:lean`. Any `sorryAx` would mean a gap. The Lean checker, not the author, certifies the theorems. The paper only states what they say.
 
 ## How to cite
 
